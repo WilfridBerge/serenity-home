@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier Rhombicuboctaèdre — Serenity Home</title>
+<meta name="description" content="Calculateur gratuit d'angles et de découpe pour la construction d'un dôme rhombicuboctaèdre en ossature bois : vue 3D, fiches de montage par triangle, export PDF.">
+<link rel="canonical" href="https://wilfridberge.eu/rhombicuboctaedre-atelier.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="js/three.min.js"></script>
+<style>
+  :root{
+    --bg:#1a1d21; --bg-panel:#22262b; --line:#383e46;
+    --paper:#e9e0cd; --paper-shadow:#c9bd9e;
+    --wood:#b9895a; --wood-dark:#8a6239; --ink:#241d14;
+    --red:#c1442d; --blue:#2f6690;
+    --text:#e7e4dd; --text-dim:#9aa0a8;
+    --mono:'IBM Plex Mono', monospace; --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--body); padding:32px 20px 80px;}
+  .wrap{max-width:1080px; margin:0 auto;}
+  header{margin-bottom:30px;}
+  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--wood); text-transform:uppercase; margin-bottom:10px;}
+  h1{font-family:var(--display); font-weight:700; font-size:clamp(26px,4vw,40px); margin:0 0 8px; line-height:1.05; letter-spacing:-.01em;}
+  .sub{color:var(--text-dim); font-size:15px; max-width:680px; line-height:1.5;}
+  .okbox{background:#16241d; border:1px solid #2f6b47; color:#a9d9bd; font-size:13px; padding:12px 16px; border-radius:8px; margin-top:10px; line-height:1.5;}
+
+  .inputs{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:22px;}
+  .field label{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;}
+  .field input{width:100%; background:#14161a; border:1px solid var(--line); color:var(--text); font-family:var(--mono); font-size:18px; padding:10px 12px; border-radius:6px;}
+  .field input:focus{outline:2px solid var(--wood); outline-offset:1px;}
+
+  .viewer-wrap{background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; margin-bottom:22px; overflow:hidden;}
+  .viewer-head{display:flex; justify-content:space-between; align-items:center; padding:14px 18px 0; flex-wrap:wrap; gap:8px 16px;}
+  .viewer-head h2{font-family:var(--display); font-size:18px; margin:0;}
+  .viewer-hint{font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+  #viewer{width:100%; height:840px; cursor:grab; touch-action:none;}
+  #viewer:active{cursor:grabbing;}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; padding:10px 18px 16px; font-family:var(--mono); font-size:11.5px; color:var(--text-dim);}
+  .legend span.dot{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:middle;}
+
+  .summary{display:flex; flex-wrap:wrap; gap:24px; padding:16px 20px; margin-bottom:28px; background:#171a1e; border-radius:10px; border:1px dashed var(--line); font-family:var(--mono); font-size:13px;}
+  .summary div span.k{color:var(--text-dim); display:block; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:3px;}
+  .summary div span.v{color:var(--text); font-size:16px;}
+
+  .fiches{display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:22px;}
+  .fiche{background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  .fiche-head{display:flex; justify-content:space-between; align-items:baseline; padding:16px 20px 0;}
+  .fiche-head h2{font-family:var(--display); font-size:17px; margin:0; font-weight:700;}
+  .fiche-head .count{font-family:var(--mono); font-size:13px; color:var(--wood);}
+  .type-num{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:13px; font-weight:600; margin-right:8px; vertical-align:middle;}
+  .diagram{margin:14px 20px; padding:16px 10px 22px; background:repeating-linear-gradient(90deg, rgba(0,0,0,0.035) 0 2px, transparent 2px 7px), linear-gradient(180deg, var(--paper), var(--paper-shadow)); border-radius:8px;}
+  .diagram svg{width:100%; height:auto; display:block;}
+  .angle-red{fill:var(--red); font-family:var(--mono); font-weight:600;}
+  .len-blue{fill:var(--blue); font-family:var(--mono); font-weight:600;}
+  .note-ink{fill:var(--ink); font-family:var(--mono);}
+  .specs{padding:6px 20px 20px; display:grid; grid-template-columns:1fr 1fr; gap:10px 16px;}
+  .spec{background:#14161a; border:1px solid var(--line); border-radius:7px; padding:10px 12px;}
+  .spec .k{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-dim); margin-bottom:4px;}
+  .spec .v{font-family:var(--mono); font-size:16px;}
+  .spec .v.accent-red{color:var(--red);}
+  .spec .v.accent-blue{color:var(--blue);}
+  .spec.full{grid-column:1/-1;}
+
+  footer.note{margin-top:28px; font-size:13px; color:var(--text-dim); line-height:1.6; border-top:1px solid var(--line); padding-top:18px;}
+  footer.note strong{color:var(--text);}
+
+  #osbNote:empty{display:none;}
+  #osbNote{background:#171a1e; border:1px dashed var(--line); border-radius:10px; padding:12px 20px; margin-bottom:22px; font-family:var(--mono); font-size:13px; color:var(--wood);}
+
+  .print-btn{display:inline-flex; align-items:center; gap:8px; background:var(--wood); color:var(--ink); font-family:var(--mono); font-size:13px; font-weight:600; border:none; border-radius:8px; padding:10px 18px; cursor:pointer; margin-bottom:18px;}
+  .print-btn:hover{background:#c99a68;}
+
+  @media print{
+    :root{
+      --bg:#ffffff; --bg-panel:#ffffff; --line:#ccc;
+      --paper:#f2ede0; --paper-shadow:#e3d9c2; --ink:#241d14;
+      --text:#111111; --text-dim:#444444; --wood:#8a6239;
+    }
+    body{padding:0; background:#fff;}
+    .no-print{display:none !important;}
+    .wrap{display:flex; flex-direction:column; max-width:100%;}
+    .fiches{order:2; display:block; column-count:1; page-break-before:always;}
+    .fiche{page-break-inside:avoid; margin-bottom:16px; border:1px solid #ccc;}
+    #correspondance-wrap{order:3; page-break-before:always;}
+    #montage-wrap{order:4; page-break-before:always;}
+    footer.note{order:5;}
+    #osbNote{order:6;}
+    #printParams{display:flex !important; order:1; margin-bottom:16px;}
+    #montage{max-height:none !important; overflow:visible !important;}
+    #montage-wrap, #correspondance-wrap{overflow:visible !important; height:auto !important;}
+    table{page-break-inside:auto;}
+    tr{page-break-inside:avoid;}
+    a{color:inherit; text-decoration:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Atelier — Good Karma / sans connecteur · V0.1.0</div>
+    <h1>Rhombicuboctaèdre — vue 3D + angles validés</h1>
+    <p class="sub no-print">Vue 3D reconstruite : dôme base ouverte en bas, rotation par axe fixe (glisser ou flèches = axes Z/X), et numéros de segment (types 1 à 4, mêmes que les fiches ci-dessous) affichés dans chaque triangle.</p>
+  </header>
+
+  <div class="inputs no-print">
+    <div class="field"><label for="diametre">Diamètre (sphère circonscrite, m)</label><input type="number" id="diametre" value="5.96" step="0.01" min="0.1"></div>
+    <div class="field"><label for="largeur">Largeur bois (mm)</label><input type="number" id="largeur" value="90" step="1" min="10"></div>
+    <div class="field"><label for="epaisseur">Épaisseur bois (mm)</label><input type="number" id="epaisseur" value="27" step="1" min="5"></div>
+    <div class="field"><label for="essence">Essence du bois</label>
+      <select id="essence" style="width:100%; background:#14161a; border:1px solid var(--line); color:var(--text); font-family:var(--mono); font-size:18px; padding:10px 12px; border-radius:6px;">
+        <option value="540">Douglas</option>
+        <option value="450" selected>Épicéa</option>
+        <option value="710">Chêne</option>
+        <option value="680">Hêtre</option>
+        <option value="620">Châtaignier</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="summary" id="printParams" style="display:none;"></div>
+
+  <div class="summary no-print" id="dimSummary" style="margin-bottom:22px;"></div>
+
+  <div class="viewer-wrap no-print">
+    <div class="viewer-head">
+      <h2>Vue 3D</h2>
+      <label style="display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; color:var(--text-dim); cursor:pointer;">
+        <input type="checkbox" id="toggleColors" checked style="accent-color:#b9895a;"> Couleurs des surfaces
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; color:var(--text-dim); cursor:pointer;">
+        <input type="checkbox" id="toggleWireframe" style="accent-color:#b9895a;"> Arêtes seulement
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; color:var(--text-dim); cursor:pointer;">
+        <input type="checkbox" id="toggleTriNum" style="accent-color:#b9895a;"> Numéros de triangle
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; color:var(--text-dim); cursor:pointer;">
+        <input type="checkbox" id="toggleGrid" checked style="accent-color:#b9895a;"> Grille de sol
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; color:var(--text-dim); cursor:pointer;">
+        <input type="checkbox" id="toggleTypeNum" checked style="accent-color:#b9895a;"> Numéros de segment
+      </label>
+      <span class="viewer-hint">glisser horizontal/vertical ou ← → ↑ ↓ : tourne sur Z/X · ⌘/Ctrl+glisser : déplacer · molette : zoomer · R ou ⌘/Ctrl+« + » : remettre à plat (ouverture vers le bas)</span>
+    </div>
+    <div id="viewer"></div>
+    <div class="legend">
+      <div><span class="dot" style="background:#7fa8c9"></span>Murs / Ceinture / Toit-carrés (types 1, 2, 3)</div>
+      <div><span class="dot" style="background:#d9c27a"></span>Toit-triangles / Fermeture (type 4)</div>
+    </div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="viewer-wrap" id="correspondance-wrap" style="padding:4px 0 20px;">
+    <div class="viewer-head"><h2>Table de correspondance des jonctions (champ à champ)</h2></div>
+    <div id="correspondance" style="padding:8px 20px; font-family:var(--mono); font-size:13px;"></div>
+  </div>
+
+  <div class="viewer-wrap" id="montage-wrap" style="padding:4px 0 20px;">
+    <div class="viewer-head"><h2>Fiche de montage (par triangle)</h2></div>
+    <div id="montage" style="padding:8px 20px; font-family:var(--mono); font-size:12.5px; max-height:420px; overflow:auto;"></div>
+  </div>
+
+  <button class="print-btn no-print" onclick="window.print()">
+    <i style="font-style:normal;">⬇</i> Télécharger en PDF (fiches + correspondance + montage)
+  </button>
+  <div class="fiches" id="fiches"></div>
+
+  <div id="osbNote"></div>
+
+  <footer class="note">
+    <strong>Hauteur et surfaces :</strong> le mur et la ceinture forment un octogone régulier (équidistant de l'axe), donc les surfaces au sol se calculent exactement. La largeur du bois réduit la hauteur au sommet (planche du chapeau posée à plat) et décale les surfaces intérieure/extérieure (planches sur chant). Pour la <strong>surface Carrez</strong> (hauteur ≥ 1,80 m), le dôme n'étant pas parfaitement axisymétrique (c'est un octogone, pas un cercle), le rayon où la hauteur passe sous 1,80 m est assimilé à un octogone régulier équivalent — approximation raisonnable, à vérifier sur site si la marge est faible.<br><br>    <strong>D'où viennent les 4 types :</strong> Type 1 = côté de carré (arête réelle, 52 pièces) · Type 2 &amp; 3 = rayons (diagonales des carrés, 52+52 pièces, images miroir l'une de l'autre) · Type 4 = côté de vrai triangle (12 pièces). Total 168 pièces, confirmé exact.<br><br>
+    <strong>Formule de longueur à découper :</strong> longueur totale − épaisseur / sin(90° − angle de table gauche).
+  </footer>
+
+  <footer class="note no-print" style="margin-top:12px; border-top:none; padding-top:0;">
+    <a href="index.html" style="color:var(--text-dim);">← Retour à Serenity Home</a>
+    &nbsp;·&nbsp;
+    <a href="mentions-legales.html" style="color:var(--text-dim);">Mentions légales</a>
+    &nbsp;·&nbsp;
+    <a href="confidentialite.html" style="color:var(--text-dim);">Confidentialité</a>
+  </footer>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ------------------------------------------------------------------
+// Vecteurs
+// ------------------------------------------------------------------
+function vAdd(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function vSub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function vScale(a,s){return [a[0]*s,a[1]*s,a[2]*s];}
+function vCross(a,b){return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];}
+function vDot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function vLen(a){return Math.hypot(a[0],a[1],a[2]);}
+function vNorm(a){const l=vLen(a)||1; return [a[0]/l,a[1]/l,a[2]/l];}
+
+// ------------------------------------------------------------------
+// Génération du solide de base (24 sommets, 26 faces, zones)
+// ------------------------------------------------------------------
+function buildGeometry(edgeLen){
+  const k = 1 + Math.sqrt(2);
+  const s = edgeLen/2;
+  const signsList = [];
+  for(const sx of [1,-1]) for(const sy of [1,-1]) for(const sz of [1,-1]) signsList.push([sx,sy,sz]);
+  const signIndex = m => signsList.findIndex(sg => sg[0]===m[0] && sg[1]===m[1] && sg[2]===m[2]);
+  const vidx = (P, sg) => P*8 + signIndex(sg);
+  const verts = new Array(24);
+  for(let P=0; P<3; P++){
+    for(const sg of signsList){
+      const coord = [1,1,1]; coord[P] = k;
+      verts[vidx(P,sg)] = coord.map((c0,i)=> c0*sg[i]*s);
+    }
+  }
+  const faces = [];
+  for(let P=0; P<3; P++){
+    for(const sP of [1,-1]){
+      const vs = signsList.filter(sg=>sg[P]===sP).map(sg=>vidx(P,sg));
+      let zone;
+      if(P===2 && sP===1) zone='top_cap';
+      else if(P===2 && sP===-1) zone='bottom_main';
+      else zone='wall';
+      faces.push({verts:vs, type:'carre', zone});
+    }
+  }
+  const axisPairs = [[0,1],[0,2],[1,2]];
+  for(const [A,B] of axisPairs){
+    const C = 3-A-B;
+    for(const sA of [1,-1]){
+      for(const sB of [1,-1]){
+        const vs = [];
+        for(const P of [A,B]){
+          for(const sC of [1,-1]){
+            const sg=[0,0,0]; sg[A]=sA; sg[B]=sB; sg[C]=sC;
+            vs.push(vidx(P,sg));
+          }
+        }
+        let zone;
+        if(A===0 && B===1) zone='belt_corner';
+        else { const sZ = (B===2)? sB : sA; zone = (sZ===1) ? 'top_bridge' : 'bottom_bridge'; }
+        faces.push({verts:vs, type:'carre', zone});
+      }
+    }
+  }
+  for(const sg of signsList){
+    const vs = [0,1,2].map(P=>vidx(P,sg));
+    const zone = (sg[2]===1) ? 'top_tri' : 'bottom_tri';
+    faces.push({verts:vs, type:'triangle', zone});
+  }
+  return {verts, faces};
+}
+
+const ZONES_KEPT = ['wall','belt_corner','top_bridge','top_tri','top_cap'];
+// Couleur par FORME de triangle (2 formes distinctes existent : sous-triangle de carré, vrai triangle)
+const KIND_COLOR = { sous_triangle:0x7fa8c9, triangle_reel:0xd9c27a };
+
+function orderFaceVerts(vs, verts){
+  const pts = vs.map(i=>verts[i]);
+  const centroid = pts.reduce((a,p)=>vAdd(a,vScale(p,1/pts.length)), [0,0,0]);
+  const v1=vSub(pts[0],pts[1]), v2=vSub(pts[2],pts[1]);
+  let n=vNorm(vCross(v1,v2));
+  let e1=vNorm(vSub(pts[0],centroid));
+  const e2=vCross(n,e1);
+  const idxAngle = vs.map((idx,ii)=>{
+    const rel=vSub(pts[ii],centroid);
+    return {idx, ang:Math.atan2(vDot(rel,e2),vDot(rel,e1))};
+  });
+  idxAngle.sort((a,b)=>a.ang-b.ang);
+  return idxAngle.map(o=>o.idx);
+}
+
+// ------------------------------------------------------------------
+// Maillage triangulaire : cellules (apex de carré projeté sur la sphère)
+// ------------------------------------------------------------------
+function buildMesh(edgeLen){
+  const geo = buildGeometry(edgeLen);
+  const R = vLen(geo.verts[0]);
+  const pointOf = {};
+  geo.verts.forEach((p,i)=> pointOf[i]=p);
+  const cells = [];
+  let synthCounter = 1000;
+  function addCell(ids, pts, zone, kind){
+    const n0 = vNorm(vCross(vSub(pts[1],pts[0]), vSub(pts[2],pts[0])));
+    const centroid = vScale(pts.reduce((a,p)=>vAdd(a,p),[0,0,0]), 1/3);
+    const n = (vDot(n0,centroid) < 0) ? vScale(n0,-1) : n0;
+    cells.push({ids, pts, normal:n, zone, kind});
+  }
+  geo.faces.filter(f=>ZONES_KEPT.includes(f.zone)).forEach(f=>{
+    const ordered = orderFaceVerts(f.verts, geo.verts);
+    const pts = ordered.map(i=>pointOf[i]);
+    if(f.type==='triangle'){
+      addCell(ordered.slice(), pts, f.zone, 'triangle_reel');
+    } else {
+      const flatC = vScale(pts.reduce((a,p)=>vAdd(a,p),[0,0,0]), 1/pts.length);
+      const projC = vScale(vNorm(flatC), R);
+      const cid = synthCounter++;
+      pointOf[cid] = projC;
+      const n = pts.length;
+      for(let i=0;i<n;i++){
+        addCell([cid, ordered[i], ordered[(i+1)%n]], [projC, pts[i], pts[(i+1)%n]], f.zone, 'sous_triangle');
+      }
+    }
+  });
+  return {pointOf, cells, R};
+}
+
+// numéro de type pour un côté de cellule (i -> i+1 dans cell.ids)
+function typeForSide(cell, sideIdx){
+  if(cell.kind==='triangle_reel') return 4;
+  if(sideIdx===1) return 1;
+  return (sideIdx===0) ? 2 : 3;
+}
+
+// arêtes partagées : clé "a_b" (triée) -> liste de {ci, sideIdx}
+function buildPlanks(mesh){
+  const planks = {};
+  mesh.cells.forEach((c,ci)=>{
+    for(let i=0;i<3;i++){
+      const p=c.ids[i], q=c.ids[(i+1)%3];
+      const a=Math.min(p,q), b=Math.max(p,q);
+      const key = a+'_'+b;
+      (planks[key] = planks[key] || []).push({ci, sideIdx:i});
+    }
+  });
+  return planks;
+}
+
+// ------------------------------------------------------------------
+// Three.js viewer — rotation par axe fixe + numéros
+// ------------------------------------------------------------------
+let scene, camera, renderer, group, cellsGroup, gridHelper, target, lastMesh=null;
+const DEFAULT_CAM_POS = [7,-7,5];
+
+function initViewer(){
+  const el = $('viewer');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1d21);
+  camera = new THREE.PerspectiveCamera(45, el.clientWidth/el.clientHeight, 0.1, 100);
+  camera.up.set(0,0,1); // Z = le haut (sol -> ciel), pas Y (défaut Three.js)
+  target = new THREE.Vector3(0,0,0);
+  camera.position.set(...DEFAULT_CAM_POS);
+  camera.lookAt(target);
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(el.clientWidth, el.clientHeight);
+  el.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(5,8,7); scene.add(dl);
+
+  // Grille de sol : solidaire du dôme (tourne avec lui), enfant de "group".
+  gridHelper = new THREE.GridHelper(20, 20, 0x5a6270, 0x33383f);
+  gridHelper.rotation.x = Math.PI/2;
+
+  group = new THREE.Group();       // tout ce qui tourne ensemble
+  scene.add(group);
+  group.add(gridHelper);
+  cellsGroup = new THREE.Group();  // reconstruit à chaque calc()
+  group.add(cellsGroup);
+
+  let dragging=false, panning=false, lastX=0, lastY=0;
+  function recenter(){
+    group.quaternion.identity();
+    target.set(0,0,0);
+    camera.position.set(...DEFAULT_CAM_POS);
+    camera.up.set(0,0,1);
+    camera.lookAt(target);
+  }
+  function tiltDome(angle){
+    const right = new THREE.Vector3(); camera.getWorldDirection(right); right.cross(camera.up).normalize();
+    group.rotateOnWorldAxis(right, angle);
+  }
+
+  el.addEventListener('pointerdown', e=>{ if(e.metaKey||e.ctrlKey) panning=true; else dragging=true; lastX=e.clientX; lastY=e.clientY; });
+  window.addEventListener('pointerup', ()=>{dragging=false; panning=false;});
+  window.addEventListener('pointermove', e=>{
+    const dx=e.clientX-lastX, dy=e.clientY-lastY;
+    if(panning){
+      const dist = camera.position.distanceTo(target);
+      const panScale = dist*0.0016;
+      const right = new THREE.Vector3(); camera.getWorldDirection(right); right.cross(camera.up).normalize();
+      const up = camera.up.clone().applyQuaternion(camera.quaternion).normalize();
+      const move = right.multiplyScalar(-dx*panScale).add(up.multiplyScalar(dy*panScale));
+      camera.position.add(move); target.add(move); camera.lookAt(target);
+      lastX=e.clientX; lastY=e.clientY;
+    } else if(dragging){
+      // Un seul mouvement à la fois (le dominant), pour éviter qu'un geste horizontal
+      // légèrement imprécis ne fasse aussi pencher le dôme (fuite d'axe).
+      if(Math.abs(dx) >= Math.abs(dy)){
+        // Horizontal : le DÔME tourne sur lui-même autour de Z, la caméra ("le drone") ne bouge pas
+        group.rotateOnAxis(new THREE.Vector3(0,0,1), dx*0.008);
+      } else {
+        tiltDome(dy*0.008); // Vertical : le DÔME s'incline sur l'axe "droite" actuel de la caméra
+      }
+      lastX=e.clientX; lastY=e.clientY;
+    }
+  });
+  el.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const dir = camera.position.clone().sub(target);
+    dir.multiplyScalar(1 + e.deltaY*0.001);
+    camera.position.copy(target).add(dir);
+  }, {passive:false});
+  window.addEventListener('keydown', e=>{
+    const tag = (e.target && e.target.tagName) || '';
+    if(tag==='INPUT' || tag==='TEXTAREA') return; // ne pas voler les flèches aux champs de saisie
+
+    if((e.metaKey || e.ctrlKey) && (e.key==='+' || e.key==='=')){
+      e.preventDefault(); recenter(); return;
+    }
+    const STEP = 0.12; // ~7° par appui
+    switch(e.key){
+      case 'ArrowLeft':  e.preventDefault(); group.rotateOnAxis(new THREE.Vector3(0,0,1),  STEP*1.2); break;
+      case 'ArrowRight': e.preventDefault(); group.rotateOnAxis(new THREE.Vector3(0,0,1), -STEP*1.2); break;
+      case 'ArrowUp':    e.preventDefault(); tiltDome(STEP); break;
+      case 'ArrowDown':  e.preventDefault(); tiltDome(-STEP); break;
+      case 'r': case 'R': e.preventDefault(); recenter(); break;
+    }
+  });
+  window.addEventListener('resize', ()=>{
+    camera.aspect = el.clientWidth/el.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(el.clientWidth, el.clientHeight);
+  });
+  animate();
+}
+function animate(){ requestAnimationFrame(animate); renderer.render(scene, camera); }
+
+const WOOD_NEUTRAL = 0xc9a877;
+
+function makeNumberSprite(number, isTriangleId){
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath(); ctx.arc(64,64,54,0,2*Math.PI);
+  ctx.fillStyle = isTriangleId ? 'rgba(47,102,144,0.94)' : 'rgba(36,29,20,0.92)';
+  ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = '#e9e0cd'; ctx.stroke();
+  ctx.fillStyle = '#f2ede0';
+  ctx.font = 'bold 66px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(number), 64, 70);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({map:tex, depthTest:true, depthWrite:false, transparent:true});
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(isTriangleId ? 0.21 : 0.315, isTriangleId ? 0.21 : 0.315, 1);
+  return sprite;
+}
+
+function updateViewer(mesh){
+  lastMesh = mesh;
+  while(cellsGroup.children.length) cellsGroup.remove(cellsGroup.children[0]);
+  const allPts = Object.values(mesh.pointOf);
+  const maxR = allPts.reduce((m,v)=>Math.max(m, vLen(v)), 0) || 1;
+  const scale = 3.2/maxR;
+  const tMM = parseFloat($('epaisseur').value) || 27;
+  const tM = tMM/1000;
+  const showColors = $('toggleColors') ? $('toggleColors').checked : true;
+  const wireframeOnly = $('toggleWireframe') ? $('toggleWireframe').checked : false;
+  const showTriNum = $('toggleTriNum') ? $('toggleTriNum').checked : false;
+  const showTypeNum = $('toggleTypeNum') ? $('toggleTypeNum').checked : true;
+  const triNumbering = computeTriangleNumbering(mesh);
+
+  // Grille de sol : positionnée au niveau du bas des murs (point le plus bas parmi les
+  // cellules RÉELLEMENT gardées — pas tous les sommets du solide théorique, dont certains
+  // appartiennent aux faces retirées comme le dessous).
+  let minZ = Infinity;
+  mesh.cells.forEach(c => c.pts.forEach(p => { if(p[2] < minZ) minZ = p[2]; }));
+  if(gridHelper){
+    const maxRHoriz = allPts.reduce((m,v)=>Math.max(m, Math.hypot(v[0],v[1])), 0) || 1;
+    const gridSize = maxRHoriz*scale*10; // beaucoup plus grand que le dôme, comme un sol de logiciel 3D
+    const newGrid = new THREE.GridHelper(gridSize, 40, 0x5a6270, 0x33383f);
+    newGrid.rotation.x = Math.PI/2;
+    newGrid.position.set(0, 0, minZ*scale);
+    newGrid.visible = $('toggleGrid') ? $('toggleGrid').checked : true;
+    group.remove(gridHelper);
+    gridHelper = newGrid;
+    group.add(gridHelper);
+  }
+
+  mesh.cells.forEach((c,ci)=>{
+    const half = vScale(c.normal, tM/2);
+    const top = c.pts.map(p=>vAdd(p,half));
+    const bot = c.pts.map(p=>vSub(p,half));
+
+    if(!wireframeOnly){
+      const positions = [];
+      const pushTri=(a,b,cc)=>positions.push(...a,...b,...cc);
+      pushTri(vScale(top[0],scale), vScale(top[1],scale), vScale(top[2],scale));
+      pushTri(vScale(bot[0],scale), vScale(bot[2],scale), vScale(bot[1],scale));
+      for(let i=0;i<3;i++){
+        const j=(i+1)%3;
+        pushTri(vScale(top[i],scale), vScale(bot[i],scale), vScale(bot[j],scale));
+        pushTri(vScale(top[i],scale), vScale(bot[j],scale), vScale(top[j],scale));
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+      g.computeVertexNormals();
+      const color = showColors ? KIND_COLOR[c.kind] : WOOD_NEUTRAL;
+      const mat = new THREE.MeshStandardMaterial({color, side:THREE.DoubleSide, roughness:0.85, metalness:0.02});
+      cellsGroup.add(new THREE.Mesh(g, mat));
+    }
+
+    const linePos = [];
+    for(let i=0;i<3;i++){
+      const j=(i+1)%3;
+      linePos.push(...vScale(top[i],scale), ...vScale(top[j],scale));
+      linePos.push(...vScale(bot[i],scale), ...vScale(bot[j],scale));
+      linePos.push(...vScale(top[i],scale), ...vScale(bot[i],scale));
+    }
+    const lg = new THREE.BufferGeometry();
+    lg.setAttribute('position', new THREE.Float32BufferAttribute(linePos,3));
+    cellsGroup.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color: wireframeOnly ? 0xcfcabb : 0x14161a, linewidth:2})));
+
+    // numéros de segment : un par côté, tiré vers le centre de CE triangle (évite le chevauchement)
+    const centroid = vScale(top.reduce((a,p)=>vAdd(a,p),[0,0,0]), 1/3);
+    const PULL = 0.32;
+    const gap = maxR*0.045;
+    for(let i=0;i<3;i++){
+      if(!showTypeNum) continue;
+      const j=(i+1)%3;
+      const mid = vScale(vAdd(top[i],top[j]),0.5);
+      const pulled = vAdd(mid, vScale(vSub(centroid,mid), PULL));
+      const raised = vAdd(pulled, vScale(c.normal, gap*0.6));
+      const label = makeNumberSprite(typeForSide(c, i));
+      label.position.set(...vScale(raised, scale));
+      cellsGroup.add(label);
+    }
+
+    // numéro de triangle (optionnel) : au centre, plus gros, couleur différente
+    if(showTriNum){
+      const triLabel = makeNumberSprite(triNumbering[ci], true);
+      triLabel.position.set(...vScale(vAdd(centroid, vScale(c.normal, gap*0.9)), scale));
+      cellsGroup.add(triLabel);
+    }
+
+    // Tasseau de support OSB (type 5) : uniquement sur les vrais triangles, trop hauts pour
+    // qu'une seule plaque OSB (1220mm de large) les couvre — segment horizontal à la hauteur
+    // de la jointure entre 2 plaques, dans le même plan que le triangle.
+    if(c.kind==='triangle_reel'){
+      let baseI = 0, baseAvgZ = Infinity;
+      for(let i=0;i<3;i++){
+        const j=(i+1)%3;
+        const avgZ = (top[i][2]+top[j][2])/2;
+        if(avgZ < baseAvgZ){ baseAvgZ = avgZ; baseI = i; }
+      }
+      const baseA = baseI, baseB = (baseI+1)%3, apex = (baseI+2)%3;
+      const edgeLen = vLen(vSub(top[baseB], top[baseA]));
+      const hauteurTri = edgeLen * Math.sin(Math.PI/3);
+      const OSB_M = 1.220;
+      if(hauteurTri > OSB_M){
+      const tFrac = Math.min(0.9, OSB_M/hauteurTri);
+      const pA = vAdd(top[baseA], vScale(vSub(top[apex],top[baseA]), tFrac));
+      const pB = vAdd(top[baseB], vScale(vSub(top[apex],top[baseB]), tFrac));
+
+      const dir = vNorm(vSub(pB,pA));
+      const battenLen = vLen(vSub(pB,pA));
+      const wM = (parseFloat($('largeur').value)||90)/1000;
+      const battenHalfW = vScale(vCross(c.normal, dir), wM/2);
+      const bTop = [vAdd(pA,battenHalfW), vAdd(pB,battenHalfW), vSub(pB,battenHalfW), vSub(pA,battenHalfW)];
+      const battenPositions = [];
+      const pushQuad=(p0,p1,p2,p3)=>{ battenPositions.push(...p0,...p1,...p2, ...p0,...p2,...p3); };
+      pushQuad(vScale(bTop[0],scale), vScale(bTop[1],scale), vScale(bTop[2],scale), vScale(bTop[3],scale));
+      const bg = new THREE.BufferGeometry();
+      bg.setAttribute('position', new THREE.Float32BufferAttribute(battenPositions,3));
+      bg.computeVertexNormals();
+      const bmat = new THREE.MeshStandardMaterial({color:0xc1442d, side:THREE.DoubleSide, roughness:0.8});
+      cellsGroup.add(new THREE.Mesh(bg, bmat));
+
+      const blPos = [];
+      for(let i=0;i<4;i++){ const j=(i+1)%4; blPos.push(...vScale(bTop[i],scale), ...vScale(bTop[j],scale)); }
+      const blg = new THREE.BufferGeometry();
+      blg.setAttribute('position', new THREE.Float32BufferAttribute(blPos,3));
+      cellsGroup.add(new THREE.LineSegments(blg, new THREE.LineBasicMaterial({color:0x241d14})));
+      }
+    }
+  });
+}
+
+// ------------------------------------------------------------------
+// Numérotation des triangles par "tours" : ceinture (8 carrés) -> bande
+// supérieure (4 carrés toit + 4 triangles toit) -> fermeture (1 carré),
+// sens horaire vu du dessus, en conservant l'ordre interne de chaque carré.
+// ------------------------------------------------------------------
+function computeTriangleNumbering(mesh){
+  const groups = {};
+  mesh.cells.forEach((c,ci)=>{
+    const key = (c.kind==='sous_triangle') ? ('sq_'+c.ids[0]) : ('tri_'+ci);
+    (groups[key] = groups[key] || {cellIdxs:[], zone:c.zone}).cellIdxs.push(ci);
+  });
+  const groupList = Object.values(groups).map(g=>{
+    const pts = g.cellIdxs.map(ci=>mesh.cells[ci].pts).flat();
+    const centroid = pts.reduce((a,p)=>vAdd(a,p), [0,0,0]).map(v=>v/pts.length);
+    const angle = Math.atan2(centroid[1], centroid[0]);
+    return {...g, angle};
+  });
+
+  function sortClockwiseFrom(list, refAngle){
+    return list.slice().sort((a,b)=>{
+      const da = ((refAngle - a.angle) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+      const db = ((refAngle - b.angle) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+      return da - db;
+    });
+  }
+
+  const ring1 = groupList.filter(g=> g.zone==='wall' || g.zone==='belt_corner');
+  const ring2 = groupList.filter(g=> g.zone==='top_bridge' || g.zone==='top_tri');
+  const ring3 = groupList.filter(g=> g.zone==='top_cap');
+
+  const start1 = ring1[0];
+  const ring1Sorted = sortClockwiseFrom(ring1, start1.angle);
+
+  let start2 = ring2[0], bestDiff = Infinity;
+  ring2.forEach(g=>{
+    const diff = Math.abs(Math.atan2(Math.sin(g.angle-start1.angle), Math.cos(g.angle-start1.angle)));
+    if(diff < bestDiff){ bestDiff = diff; start2 = g; }
+  });
+  const ring2Sorted = sortClockwiseFrom(ring2, start2.angle);
+
+  const orderedGroups = [...ring1Sorted, ...ring2Sorted, ...ring3];
+
+  const numberOf = {};
+  let n = 1;
+  orderedGroups.forEach(g=>{
+    g.cellIdxs.forEach(ci=>{ numberOf[ci] = n++; });
+  });
+  return numberOf;
+}
+
+// ------------------------------------------------------------------
+// Table de correspondance des jonctions (quel type touche quel type, champ à champ)
+// ------------------------------------------------------------------
+function buildCorrespondance(mesh){
+  const planks = buildPlanks(mesh);
+  const counts = {};
+  Object.values(planks).forEach(entries=>{
+    if(entries.length!==2) return; // arête de bord (pas de jonction)
+    const [e1,e2] = entries;
+    const t1 = typeForSide(mesh.cells[e1.ci], e1.sideIdx);
+    const t2 = typeForSide(mesh.cells[e2.ci], e2.sideIdx);
+    const key = [t1,t2].sort((a,b)=>a-b).join('-');
+    counts[key] = (counts[key]||0)+1;
+  });
+  const rows = Object.entries(counts).sort((a,b)=> a[0].localeCompare(b[0]));
+  let html = `<table style="width:100%; border-collapse:collapse;">
+    <tr style="text-align:left; color:var(--text-dim); font-size:11px; text-transform:uppercase;">
+      <th style="padding:6px 10px;">Jonction</th><th style="padding:6px 10px;">Nb d'arêtes</th>
+    </tr>`;
+  rows.forEach(([key,count])=>{
+    const [a,b] = key.split('-');
+    html += `<tr style="border-top:1px solid var(--line);">
+      <td style="padding:6px 10px;"><span class="type-num">N°${a}</span> ↔ <span class="type-num">N°${b}</span></td>
+      <td style="padding:6px 10px;">${count}</td>
+    </tr>`;
+  });
+  $('correspondance').innerHTML = html;
+}
+
+// ------------------------------------------------------------------
+// Fiche de montage : pour chaque triangle, ses 3 voisins (par numéro)
+// ------------------------------------------------------------------
+function buildMontage(mesh){
+  const planks = buildPlanks(mesh);
+  const triNumbering = computeTriangleNumbering(mesh);
+  const neighborsOf = mesh.cells.map(()=>[null,null,null]);
+  Object.values(planks).forEach(entries=>{
+    if(entries.length!==2) return;
+    const [e1,e2] = entries;
+    neighborsOf[e1.ci][e1.sideIdx] = {ci:e2.ci, sideIdx:e2.sideIdx};
+    neighborsOf[e2.ci][e2.sideIdx] = {ci:e1.ci, sideIdx:e1.sideIdx};
+  });
+
+  let html = `<table style="width:100%; border-collapse:collapse;">
+    <tr style="text-align:left; color:var(--text-dim); font-size:11px; text-transform:uppercase;">
+      <th style="padding:6px 10px;">Triangle</th><th style="padding:6px 10px;">Zone</th><th style="padding:6px 10px;">Voisins (côté : type → triangle)</th>
+    </tr>`;
+  // affichage trié par numéro de tour (1 -> 56), plus lisible pour le montage
+  const order = mesh.cells.map((c,ci)=>ci).sort((a,b)=> triNumbering[a]-triNumbering[b]);
+  order.forEach(ci=>{
+    const c = mesh.cells[ci];
+    const parts = [0,1,2].map(i=>{
+      const ty = typeForSide(c,i);
+      const nb = neighborsOf[ci][i];
+      return nb ? `côté${i+1}: N°${ty}→△${triNumbering[nb.ci]}` : `côté${i+1}: N°${ty}→bord ouvert`;
+    });
+    html += `<tr style="border-top:1px solid var(--line);">
+      <td style="padding:5px 10px;"><span class="type-num">△${triNumbering[ci]}</span></td>
+      <td style="padding:5px 10px; color:var(--text-dim);">${ZONE_LABEL[c.zone]||c.zone}</td>
+      <td style="padding:5px 10px;">${parts.join(' · ')}</td>
+    </tr>`;
+  });
+  $('montage').innerHTML = html;
+}
+
+const ZONE_LABEL = { wall:'Mur', belt_corner:'Ceinture', top_bridge:'Toit-carré', top_tri:'Toit-triangle', top_cap:'Fermeture' };
+
+// ------------------------------------------------------------------
+// Diagramme SVG (trapèze asymétrique, avec inclinaison affichée)
+// ------------------------------------------------------------------
+function fmtAngle(x){ const r = Math.round(x*10)/10; return (r===0?0:r).toFixed(1); }
+
+function trapezeSVG(longInt, longExt, largeurAffiche, angleGauche, angleDroite, axial, numero){
+  const W=560,H=190, margeH=90, yTop=58,yBot=132;
+  const a1 = Math.max(5,Math.min(80,angleGauche));
+  const a2 = Math.max(5,Math.min(80,angleDroite));
+  const diffPxL = 30 + a1*0.5, diffPxR = 30 + a2*0.5;
+  const xTopL=margeH+diffPxL, xTopR=W-margeH-diffPxR, xBotL=margeH, xBotR=W-margeH;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="${xTopL},${yTop} ${xTopR},${yTop} ${xBotR},${yBot} ${xBotL},${yBot}" fill="none" stroke="#8a6239" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="${W/2}" y="16" text-anchor="middle" class="len-blue" font-size="15">Longueur à découper : ${longInt} mm</text>
+    <text x="${W/2}" y="${H-6}" text-anchor="middle" class="note-ink" font-size="12" opacity="0.75">Longueur totale : ${longExt} mm — pour vérification</text>
+    <circle cx="${(xTopL+xTopR)/2}" cy="${(yTop+yBot)/2}" r="20" fill="#241d14"/>
+    <text x="${(xTopL+xTopR)/2}" y="${(yTop+yBot)/2}" text-anchor="middle" dominant-baseline="central" fill="#e9e0cd" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="18">${numero}</text>
+    <text x="${xTopL-6}" y="${yTop+22}" text-anchor="end" class="angle-red" font-size="14">${fmtAngle(angleGauche)}°</text>
+    <text x="${xBotL-6}" y="${yBot-10}" text-anchor="end" class="angle-red" font-size="11" opacity="0.85">incl. ${fmtAngle(axial)}°</text>
+    <text x="${xTopR+6}" y="${yTop+22}" text-anchor="start" class="angle-red" font-size="14">${fmtAngle(angleDroite)}°</text>
+    <text x="${xBotR+6}" y="${yBot-10}" text-anchor="start" class="angle-red" font-size="11" opacity="0.85">incl. ${fmtAngle(axial)}°</text>
+  </svg>`;
+}
+
+// ------------------------------------------------------------------
+// Les 4 types de pièces, avec les angles validés
+// ------------------------------------------------------------------
+const TYPES = [
+  { num:1, nom:'Côté de carré (arête réelle)', longueurRef:'arete', angleGauche:43.0, angleDroite:43.0, axial:20.9, pieces:52 },
+  { num:2, nom:'Rayon (diagonale de carré)',   longueurRef:'rayon', angleGauche:43.0, angleDroite:4.0,  axial:15.18, pieces:52 },
+  { num:3, nom:'Rayon (miroir)',                longueurRef:'rayon', angleGauche:4.0,  angleDroite:43.0, axial:15.18, pieces:52 },
+  { num:4, nom:'Côté de vrai triangle',          longueurRef:'arete', angleGauche:30.0, angleDroite:30.0, axial:20.9, pieces:12 },
+  { num:5, nom:'Tasseau de support OSB (joint de plaque)', longueurRef:'tasseau', angleGauche:30.0, angleDroite:30.0, axial:0.0, pieces:4 },
+];
+
+// Largeur standard d'une plaque OSB, dans le sens utilisé pour couvrir un vrai triangle (mm)
+const OSB_LARGEUR_MM = 1220;
+
+// Pré-trou : formule vérifiée sur les 4 types
+// = épaisseur/tan(90°-angle_droite) + épaisseur/sin(90°-angle_droite) - décalage
+// décalage = 13 pour un angle droit très fermé (4°), 5 sinon
+function preTrou(t, angleDroite){
+  const offset = (Math.round(angleDroite)===4) ? 13 : 5;
+  const rad = (90-angleDroite)*Math.PI/180;
+  return Math.floor(t/Math.tan(rad) + t/Math.sin(rad) - offset);
+}
+
+// ------------------------------------------------------------------
+// Calcul principal
+// ------------------------------------------------------------------
+function calc(){
+  const D = parseFloat($('diametre').value);
+  const w = parseFloat($('largeur').value);
+  const t = parseFloat($('epaisseur').value);
+  const densite = parseFloat($('essence').value) || 450;
+  if(!D || !w || !t) return;
+
+  const R = D/2;
+  const areteM = R/1.398966;
+  const areteMM = areteM*1000;
+  const rayonMM = (0.52372*R)*1000;
+
+  // --- Hauteur et surfaces (mur + ceinture forment un octogone régulier, équidistant de l'axe) ---
+  const k = 1+Math.sqrt(2);
+  const s = areteM/2; // demi-arête, en mètres
+  const wM = w/1000;  // largeur bois, en mètres
+  const tan225 = Math.tan(22.5*Math.PI/180);
+
+  const hauteurInt = s*(k+1) - wM/2;              // sommet du chapeau (intérieur) - sol
+  const apothemExt = k*s + wM/2;
+  const apothemInt = k*s - wM/2;
+  const surfaceExt = 8*apothemExt*apothemExt*tan225;
+  const surfaceInt = 8*apothemInt*apothemInt*tan225;
+
+  // Surface Carrez : hauteur sous plafond décroît linéairement de hauteurInt (au centre,
+  // jusqu'au bord du chapeau, rayon=s) à (2s - largeur/2) au niveau du mur (rayon=k*s).
+  // Approximation : on assimile l'octogone à un disque de même aire pour situer le rayon
+  // où la hauteur passe sous 1,80 m (le dôme n'étant pas parfaitement axisymétrique).
+  const SEUIL_CARREZ = 1.8;
+  const hauteurAuMur = 2*s - wM/2;
+  let surfaceCarrez;
+  if(hauteurInt <= SEUIL_CARREZ){
+    surfaceCarrez = 0;
+  } else if(hauteurAuMur >= SEUIL_CARREZ){
+    surfaceCarrez = surfaceInt;
+  } else {
+    const rSeuil = (hauteurInt + s) - SEUIL_CARREZ; // rayon où hauteur = 1,80 m
+    surfaceCarrez = 8*rSeuil*rSeuil*tan225;
+  }
+
+  // Surface totale extérieure de la "peau" du dôme (somme des 56 triangles) — utile pour le
+  // bardage, différent de la surface au sol (qui est une projection horizontale, pas la peau).
+  const rayonM = rayonMM/1000;
+  const demiBaseM = areteM/2;
+  const hauteurSousTriM = Math.sqrt(rayonM*rayonM - demiBaseM*demiBaseM);
+  const aireSousTriM2 = 0.5*areteM*hauteurSousTriM;
+  const aireVraiTriM2 = (Math.sqrt(3)/4)*areteM*areteM;
+  const surfaceBardage = 52*aireSousTriM2 + 4*aireVraiTriM2;
+
+  const essenceLabel = $('essence').options[$('essence').selectedIndex].text;
+  $('printParams').innerHTML = `
+    <div><span class="k">Diamètre (sphère circonscrite)</span><span class="v">${D} m</span></div>
+    <div><span class="k">Largeur bois</span><span class="v">${w} mm</span></div>
+    <div><span class="k">Épaisseur bois</span><span class="v">${t} mm</span></div>
+    <div><span class="k">Essence du bois</span><span class="v">${essenceLabel}</span></div>
+  `;
+
+  $('dimSummary').innerHTML = `
+    <div><span class="k">Hauteur du dôme (intérieure)</span><span class="v">${hauteurInt.toFixed(2)} m</span></div>
+    <div><span class="k">Surface intérieure au sol</span><span class="v">${surfaceInt.toFixed(2)} m²</span></div>
+    <div><span class="k">Surface extérieure au sol</span><span class="v">${surfaceExt.toFixed(2)} m²</span></div>
+    <div><span class="k">Surface habitable (loi Carrez, ≥1,80m)</span><span class="v">${surfaceCarrez.toFixed(2)} m²</span></div>
+    <div><span class="k">Surface totale extérieure (bardage)</span><span class="v">${surfaceBardage.toFixed(2)} m²</span></div>
+  `;
+
+  const mesh = buildMesh(areteM);
+  updateViewer(mesh);
+  buildCorrespondance(mesh);
+  buildMontage(mesh);
+
+  const hauteurVraiTri = areteMM * Math.sin(60*Math.PI/180);
+  const osbNecessaire = hauteurVraiTri > OSB_LARGEUR_MM;
+  const fractionOSB = OSB_LARGEUR_MM / hauteurVraiTri;
+  const longueurTasseauMM = osbNecessaire ? areteMM * (1 - fractionOSB) : 0;
+
+  const rows = TYPES.filter(ty => ty.longueurRef!=='tasseau' || osbNecessaire).map(ty=>{
+    const longExt = ty.longueurRef==='arete' ? areteMM : (ty.longueurRef==='rayon' ? rayonMM : longueurTasseauMM);
+    const trim = t / Math.sin((90-ty.angleGauche)*Math.PI/180);
+    const longInt = longExt - trim;
+    const volPieceM3 = (longExt/1000)*(w/1000)*(t/1000);
+    const volTypeM3 = volPieceM3 * ty.pieces;
+    const pretrou = preTrou(t, ty.angleDroite);
+    return {...ty, longExt, longInt, volTypeM3, pretrou};
+  });
+
+  const totalPieces = rows.reduce((s,r)=>s+r.pieces,0);
+  const totalLenM = rows.reduce((s,r)=>s+(r.longExt/1000)*r.pieces,0);
+  const totalVolM3 = rows.reduce((s,r)=>s+r.volTypeM3,0);
+  const poidsKg = totalVolM3*densite;
+
+  $('summary').innerHTML = `
+    <div><span class="k">Rayon (sphère)</span><span class="v">${R.toFixed(3)} m</span></div>
+    <div><span class="k">Arête</span><span class="v">${areteMM.toFixed(1)} mm</span></div>
+    <div><span class="k">Rayon (diagonale carré)</span><span class="v">${rayonMM.toFixed(1)} mm</span></div>
+    <div><span class="k">Pièces totales</span><span class="v">${totalPieces}</span></div>
+    <div><span class="k">Métrage bois</span><span class="v">${totalLenM.toFixed(1)} m</span></div>
+    <div><span class="k">Volume bois</span><span class="v">${totalVolM3.toFixed(3)} m³</span></div>
+    <div><span class="k">Poids estimé</span><span class="v">${poidsKg.toFixed(0)} kg</span></div>
+  `;
+  $('osbNote').innerHTML = osbNecessaire ? '' :
+    `⚠ Tasseau OSB (N°5) : non nécessaire à ce diamètre — le vrai triangle (hauteur ${hauteurVraiTri.toFixed(0)}mm) tient dans une seule plaque OSB de ${OSB_LARGEUR_MM}mm.`;
+
+  const fichesEl = $('fiches');
+  fichesEl.innerHTML = '';
+  rows.forEach(r=>{
+    const div = document.createElement('div');
+    div.className='fiche';
+    div.innerHTML = `
+      <div class="fiche-head"><h2><span class="type-num">N°${r.num}</span> ${r.nom}</h2><span class="count">${r.pieces} pièces</span></div>
+      <div class="diagram">${trapezeSVG(r.longInt.toFixed(1), r.longExt.toFixed(1), w, r.angleGauche, r.angleDroite, r.axial, r.num)}</div>
+      <div class="specs">
+        <div class="spec"><div class="k">Angle de table — gauche</div><div class="v accent-red">${fmtAngle(r.angleGauche)}°</div></div>
+        <div class="spec"><div class="k">Angle de table — droite</div><div class="v accent-red">${fmtAngle(r.angleDroite)}°</div></div>
+        <div class="spec full"><div class="k">Inclinaison (axiale, identique aux 2 bouts)</div><div class="v accent-red">${fmtAngle(r.axial)}°</div></div>
+        <div class="spec full"><div class="k">Pré-trou (depuis le bout droit, marquer sur la face extérieure)</div><div class="v accent-red">${r.pretrou} mm</div></div>
+        <div class="spec"><div class="k">Longueur à découper</div><div class="v accent-blue">${r.longInt.toFixed(1)} mm</div></div>
+        <div class="spec"><div class="k">Longueur totale (vérif.)</div><div class="v accent-blue">${r.longExt.toFixed(1)} mm</div></div>
+        <div class="spec full"><div class="k">Volume bois (ce type)</div><div class="v">${r.volTypeM3.toFixed(3)} m³</div></div>
+      </div>`;
+    fichesEl.appendChild(div);
+  });
+}
+
+initViewer();
+// Mémorisation locale des dimensions saisies (fonctionne car ce fichier est ouvert
+// directement dans le navigateur, pas dans une page tierce en bac à sable).
+const CHAMPS_MEMORISES = ['diametre','largeur','epaisseur','essence'];
+const STORAGE_KEY = 'rhombicuboctaedre-atelier-dims';
+
+function chargerDimensions(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    CHAMPS_MEMORISES.forEach(id=>{
+      if(saved[id] !== undefined) $(id).value = saved[id];
+    });
+  }catch(e){ /* stockage indisponible ou corrompu : on ignore, valeurs par défaut du HTML utilisées */ }
+}
+function sauverDimensions(){
+  try{
+    const data = {};
+    CHAMPS_MEMORISES.forEach(id=>{ data[id] = $(id).value; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }catch(e){ /* stockage indisponible (navigation privée, etc.) : on ignore silencieusement */ }
+}
+
+chargerDimensions();
+CHAMPS_MEMORISES.forEach(id => $(id).addEventListener(id==='essence' ? 'change' : 'input', sauverDimensions));
+
+['diametre','largeur','epaisseur','essence'].forEach(id => $(id).addEventListener(id==='essence' ? 'change' : 'input', calc));
+$('toggleColors').addEventListener('change', ()=>{ if(lastMesh) updateViewer(lastMesh); });
+$('toggleWireframe').addEventListener('change', ()=>{ if(lastMesh) updateViewer(lastMesh); });
+$('toggleTriNum').addEventListener('change', ()=>{ if(lastMesh) updateViewer(lastMesh); });
+$('toggleGrid').addEventListener('change', ()=>{ if(gridHelper) gridHelper.visible = $('toggleGrid').checked; });
+$('toggleTypeNum').addEventListener('change', ()=>{ if(lastMesh) updateViewer(lastMesh); });
+calc();
+</script>
+</body>
+</html>
