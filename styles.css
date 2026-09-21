@@ -317,6 +317,10 @@ a { color: inherit; }
 
 .pillar .body { color: var(--ink-soft); font-size: 1.05rem; margin-bottom: 1rem; }
 
+.habitat-legal { margin-top: 2rem; }
+.habitat-legal h3 { font-size: 1.1rem; margin-bottom: 0.85rem; }
+.habitat-legal p.body { margin-bottom: 0.9rem; }
+
 .pillar .note {
   font-size: 0.9rem;
   color: var(--gold-text);
@@ -527,6 +531,13 @@ footer .container {
   gap: 1rem;
 }
 footer strong { color: var(--ivory); font-family: var(--display); letter-spacing: 0.05em; }
+
+.version {
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: rgba(247, 242, 228, 0.4);
+}
 
 .footer-brand { display: flex; flex-direction: column; gap: 0.15rem; }
 
