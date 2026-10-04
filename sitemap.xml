@@ -11,6 +11,11 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://wilfridberge.eu/filtre-eau-abordable.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://wilfridberge.eu/mentions-legales.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.1</priority>

@@ -583,6 +583,138 @@ footer strong { color: var(--ivory); font-family: var(--display); letter-spacing
 .legal-nav img { height: 32px; width: auto; }
 .legal-nav a { color: var(--petrol-deep); text-decoration: none; font-family: var(--display); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.9rem; }
 
+/* ---------- Page « Filtre à eau abordable » ---------- */
+
+.legal-nav .back {
+  margin-left: auto;
+  font-family: var(--body);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.fe-page main img { max-width: 100%; height: auto; }
+
+.fe-hero {
+  padding: 4rem 0 3.5rem;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(157, 118, 57, 0.12), transparent 60%),
+    var(--ivory);
+}
+.fe-hero .container {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 3rem;
+  align-items: center;
+}
+.fe-hero h1 { font-size: clamp(1.7rem, 3.6vw, 2.6rem); line-height: 1.2; }
+.fe-hero .lede { color: var(--ink-soft); font-size: 1.1rem; margin-top: 1.25rem; max-width: 52ch; }
+.fe-hero img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; box-shadow: var(--shadow); }
+
+.fe-section { padding: 4rem 0; border-top: 1px solid var(--line); }
+.fe-section.alt { background: var(--ivory-panel); }
+.fe-section h2 { font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: 1.25rem; }
+
+.fe-prose { max-width: 64ch; color: var(--ink-soft); font-size: 1.05rem; }
+.fe-prose p + p { margin-top: 1rem; }
+.fe-caption { font-style: italic; font-size: 0.95rem; }
+
+.fe-reasons {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  counter-reset: reason;
+}
+.fe-reasons li { display: flex; flex-direction: column; gap: 1rem; counter-increment: reason; color: var(--ink-soft); }
+.fe-reasons li::before {
+  content: counter(reason);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--petrol-deep);
+}
+.fe-reasons img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; box-shadow: var(--shadow); }
+
+.fe-cta { margin-top: 2.25rem; }
+
+.fe-promo { display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+.fe-promo img { width: 130px; }
+
+.fe-offers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.fe-offer {
+  display: flex;
+  flex-direction: column;
+  background: var(--ivory-panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fe-offer img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.fe-offer-body { display: flex; flex-direction: column; gap: 0.8rem; padding: 1.4rem; flex: 1; color: var(--ink-soft); }
+.fe-offer-body h3 { font-size: 1.15rem; }
+.fe-offer-body .btn-cta { align-self: flex-start; margin-top: auto; }
+
+.fe-disclosure { max-width: 720px; margin-top: 1.5rem; font-size: 0.92rem; }
+
+.fe-advisor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: center;
+}
+.fe-advisor img { width: 100%; border-radius: 4px; box-shadow: var(--shadow); }
+.fe-advisor p { color: var(--ink-soft); font-size: 1.05rem; }
+.fe-advisor p + p { margin-top: 1.25rem; }
+.fe-advisor .strong { color: var(--petrol-deep); font-weight: 600; }
+
+.fe-flyer { display: block; width: min(440px, 100%); margin: 0 auto; }
+.fe-flyer img { width: 100%; border: 1px solid var(--line); box-shadow: var(--shadow); }
+.fe-banner { width: 100%; max-width: 760px; margin: 2rem auto 0; }
+
+.fe-gourde {
+  display: grid;
+  grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+  gap: 2.5rem;
+  align-items: center;
+  margin-top: 3rem;
+}
+.fe-gourde img { max-height: 380px; width: auto; margin: 0 auto; }
+.fe-gourde h3 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+.fe-gourde p { color: var(--ink-soft); }
+.fe-gourde .btn-cta { margin-top: 1.5rem; }
+.fe-gourde .fe-disclosure { margin-top: 1.25rem; }
+
+.fe-analyses {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+.fe-analyses img { width: 100%; background: #fff; border: 1px solid var(--line); }
+
+@media (max-width: 800px) {
+  .fe-hero .container,
+  .fe-advisor,
+  .fe-gourde { grid-template-columns: 1fr; gap: 1.75rem; }
+  .fe-hero img { aspect-ratio: 16 / 10; }
+}
+
 /* ---------- Reveal on scroll ----------
    Opacity-0 only applies once JS has confirmed it can flip it back
    (html.js-anim, set synchronously in a head script) and the visitor
