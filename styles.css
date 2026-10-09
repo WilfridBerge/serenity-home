@@ -191,7 +191,10 @@ a { color: inherit; }
   gap: 1.6rem;
 }
 
-.hero-logo { width: min(510px, 78vw); height: auto; margin-top: 0.75rem; }
+.hero-logo { width: 100%; max-width: 480px; height: auto; margin-top: 0.75rem; }
+@media (min-width: 720px) {
+  .hero-logo { width: 390px; max-width: none; }
+}
 
 .hero h1 {
   font-size: clamp(1.9rem, 4.2vw, 3rem);
